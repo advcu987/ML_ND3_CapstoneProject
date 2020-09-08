@@ -1,6 +1,7 @@
 import imutils
 import cv2
 import os
+from sklearn.utils import shuffle as shuffle
 
 
 def extract_patches(image, mask, class_type, rots, hwsize, dict_labels, patches_dataset_dir, basename):
@@ -50,25 +51,32 @@ def extract_patches(image, mask, class_type, rots, hwsize, dict_labels, patches_
     condition_col = (cols + 2*hwsize <= imsize_w) & (cols - 2*hwsize >= 0)
 
     # Remove the border pixels; keep the original rows, cols
-    rows_filt = rows[condition_row]
-    cols_filt = cols[condition_col]
+    rows_filt = rows[condition_row & condition_col]
+    cols_filt = cols[condition_col & condition_row]
+    
+    # Shuffle the array elements (but keep the mapping)
+    # This is useful for the negative class, where not all pixels will be sampled
+    rows_filt, cols_filt = shuffle(rows_filt, cols_filt, random_state = 0) 
 
+    print(class_type + " number of pix after edge filtering= " + str(len(rows_filt)))
+    
     # Decide which folder label to use, based on the input class type
     if class_type == 'class1':
         patch_folder = 'positive'
+        # Calculate the number of samples to be extracted: total number of positive pixels
+        dim = round(len(rows_filt))
     else:
         patch_folder = 'negative'
+        # Calculate the number of samples to be extracted: 1/500 of the total number of negative pixels
+        dim = round(len(rows_filt)/500)
 
         
-    if not os.path.exists(patches_dataset_dir+patch_folder+'/'+basename):
-        os.mkdir(patches_dataset_dir+patch_folder+'/'+basename)
+    if not os.path.exists(patches_dataset_dir+patch_folder):
+        os.mkdir(patches_dataset_dir+patch_folder)
         
-    # Calculate the number of samples to be extracted
-    # 305 is the number of pixels observed in a center
-    # TODO this must be improved, as it does not make much sense !!!!
-    dim = round(len(rows_filt)/305)
+    print(" final number of pix to be extracted: ", str(dim))
 
-    # For each positive center
+    # For each center
     for idx in range(dim):
         try:
             # Extract the 64x64 patch 
@@ -85,7 +93,7 @@ def extract_patches(image, mask, class_type, rots, hwsize, dict_labels, patches_
 
             patch_name = os.path.join(patches_dataset_dir,
                                       patch_folder,
-                                      basename,
+#                                       basename,
                                       basename + "_" +
                                       class_type +  
                                       "_center" + str(idx) + 
@@ -106,7 +114,7 @@ def extract_patches(image, mask, class_type, rots, hwsize, dict_labels, patches_
                 continue
 
             # break "rot" loop
-            break
+#             break
 
         # break center "idx" loop
-        break
+#         break
