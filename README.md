@@ -17,8 +17,9 @@ The libraries used in the project are:
 - Scikit learn - metrics
 
 The project is structured into **two** Jupiter Notebooks:
-1. *MakePatches*
-2. *Train_Model*
+1. *MakePatches*  - data preprocessing
+2. *Train_Model*  - original training and evaluation notebook
+3. *Train_Model_DenseNet*  - notebook used for DenseNet experiment
 
 An additional file containing helper functions is included: *helper_functions.py*
 
